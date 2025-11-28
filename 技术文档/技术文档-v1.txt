@@ -1,0 +1,208 @@
+# 技术文档
+
+## 项目名称: FocusGuard - ADHD专注守护
+
+### 版本: v1.0
+
+---
+
+## 技术架构设计
+
+### 1. 系统架构概述
+FocusGuard 应用采用分层架构设计，主要分为以下几个层次：
+
+1. **前端层**：
+   - 技术栈：React Native + TypeScript
+   - 功能：提供跨平台用户界面，支持 iOS 和 Android。
+   - 动画支持：使用 `lottie-react-native` 实现高性能动漫动画。
+   - 数据存储：基于 `@react-native-async-storage/async-storage`。
+
+2. **后端层**：
+   - 技术栈：Node.js + Express
+   - 功能：提供 RESTful API，支持任务管理、灵感记录、用户数据分析等功能。
+   - 数据库：使用 PostgreSQL 作为主要数据存储，支持复杂查询和事务。
+   - 缓存：集成 Redis 提升高频数据访问性能。
+
+3. **移动设备服务层**：
+   - 安卓：基于 Device Policy Manager 实现锁机功能。
+   - iOS：通过 Screen Time API 实现锁机和使用统计。
+
+4. **AI 模型层**：
+   - 功能：任务推荐、难度识别、用户行为分析。
+   - 技术：集成预训练模型（如 OpenAI API）或自定义轻量级模型。
+
+5. **第三方服务集成**：
+   - Goblin Tools API：用于任务拆解。
+   - 推送服务：Firebase Cloud Messaging（FCM）。
+
+---
+
+### 2. 数据库设计
+
+#### 核心数据表
+
+```sql
+-- 用户表
+CREATE TABLE Users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    energy_level INT DEFAULT 10,
+    preferences JSONB
+);
+
+-- 任务表
+CREATE TABLE Tasks (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES Users(id),
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    difficulty INT,
+    due_date TIMESTAMP,
+    is_daily BOOLEAN DEFAULT FALSE,
+    completed BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 锁机记录表
+CREATE TABLE LockSessions (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES Users(id),
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    reason TEXT,
+    task_id INT REFERENCES Tasks(id)
+);
+
+-- 灵感记录表
+CREATE TABLE Ideas (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES Users(id),
+    content TEXT,
+    related_task_id INT REFERENCES Tasks(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tags JSONB
+);
+
+-- 使用统计表
+CREATE TABLE UsageAnalytics (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES Users(id),
+    date DATE,
+    total_screen_time INT,
+    app_breakdown JSONB,
+    focus_sessions JSONB
+);
+```
+
+---
+
+### 3. 核心功能模块设计
+
+#### 3.1 锁机服务组件
+
+```typescript
+interface LockService {
+  enableLock(duration: number): Promise<void>;
+  disableLock(): Promise<void>;
+  checkLockStatus(): Promise<boolean>;
+  emergencyBypass(): Promise<void>; // 紧急情况解除
+}
+```
+
+#### 3.2 动漫伙伴组件
+
+```typescript
+interface CompanionState {
+  energy: number; // 生命值 1-10
+  mood: 'happy' | 'encouraging' | 'concerned' | 'reflective';
+  currentAnimation: string;
+}
+
+class ADHDCompanion {
+  monitorUserBehavior(): void;
+  provideEncouragement(task: Task): void;
+  triggerReflection(analytics: UserAnalytics): void;
+  updateEnergy(delta: number): void;
+}
+```
+
+#### 3.3 任务推荐引擎
+
+```typescript
+class TaskRecommender {
+  getNextTask(user: User, completedTask?: Task): Task;
+  calculateDifficulty(task: Task): number;
+  decomposeTask(task: Task): TaskStep[];
+}
+```
+
+---
+
+### 4. 扩展性设计
+
+1. **模块化设计**：
+   - 每个功能模块独立开发，便于后续扩展和维护。
+   - 使用 TypeScript 接口定义模块间的交互。
+
+2. **插件化架构**：
+   - 任务推荐算法、动漫伙伴行为逻辑等设计为可插拔模块。
+   - 支持通过配置文件动态加载新功能。
+
+3. **多语言支持**：
+   - 前端使用 i18n 库实现多语言切换。
+   - 后端 API 支持国际化数据返回。
+
+4. **云端同步**：
+   - 提供用户数据的云端备份和同步功能。
+   - 使用 AWS S3 或 Google Cloud Storage 存储用户文件。
+
+---
+
+### 5. 发布与部署
+
+1. **开发环境**：
+   - 使用 Docker 容器化开发环境，确保一致性。
+   - 提供 `docker-compose` 文件快速启动。
+
+2. **测试策略**：
+   - 单元测试：使用 Jest 测试核心逻辑。
+   - 集成测试：使用 Cypress 测试前后端交互。
+   - 压力测试：使用 Apache JMeter 模拟高并发场景。
+
+3. **部署流程**：
+   - 使用 CI/CD 工具（如 GitHub Actions）实现自动化部署。
+   - 前端：部署到 Vercel 或 Netlify。
+   - 后端：部署到 AWS EC2 或 Heroku。
+
+---
+
+### 6. 风险与缓解策略
+
+| 风险类型         | 描述                                     | 缓解策略                                   |
+|------------------|----------------------------------------|------------------------------------------|
+| 技术风险         | iOS 锁机功能受限                       | 提供灵活的锁机设置，减少用户反感           |
+| 用户体验风险     | 连续失败可能导致用户放弃               | 设计渐进式难度调整，提供正向反馈           |
+| 数据隐私风险     | 用户数据泄露风险                       | 数据加密存储，严格控制权限访问             |
+
+---
+
+### 7. 未来规划
+
+1. **AI 个性化适应算法**：
+   - 分析用户行为数据，动态调整任务推荐策略。
+
+2. **社交问责功能**：
+   - 支持用户邀请好友监督任务完成情况。
+
+3. **高级数据分析报表**：
+   - 提供更详细的用户行为分析和改进建议。
+
+4. **Web 端支持**：
+   - 开发 Web 版本，支持多端同步使用。
+
+---
+
+**文档版本：v1.0**
+
+**创建日期：2025年11月28日**

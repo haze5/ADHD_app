@@ -1,0 +1,62 @@
+根据当前进度，下一步需要：
+
+初始化项目代码：
+
+在 frontend 中初始化 React Native 项目。
+在 backend 中初始化 Node.js + Express 项目。
+在 database 中创建数据库初始化脚本。
+在 services 中准备服务层代码（如任务推荐、锁机功能）。
+设置开发环境：
+
+配置 Docker 容器化开发环境。
+创建 docker-compose.yml 文件，统一管理前后端和数据库服务。
+开发基础功能：
+
+前端：搭建基础页面框架，完成用户注册/登录界面。
+后端：实现用户注册/登录 API，连接数据库。
+数据库：初始化核心数据表（如用户表、任务表）。
+测试环境：
+
+在 tests 目录中添加单元测试和集成测试框架。
+具体实施步骤
+1. 初始化前端项目
+进入 frontend 目录，运行以下命令：
+npx react-native init FocusGuard
+cd FocusGuard
+安装依赖
+npm install lottie-react-native react-navigation @react-native-async-storage/async-storage
+初始化后端项目
+进入 backend 目录，运行以下命令：
+npm init -y
+npm install express body-parser cors pg jsonwebtoken
+创建基础目录结构：
+routes/：存放路由文件。
+controllers/：存放控制器逻辑。
+models/：存放数据库模型。
+3. 配置数据库
+在 database 中创建 init.sql 文件，编写核心数据表的 SQL 脚本。
+使用 Docker 启动 PostgreSQL 数据库：
+docker run --name focusguard-db -e POSTGRES_PASSWORD=yourpassword -d -p 5432:5432 postgres
+4. 配置 Docker
+在项目根目录创建 docker-compose.yml 文件，内容如下：
+version: '3.8'
+services:
+  frontend:
+    build: ./src/frontend
+    ports:
+      - "3000:3000"
+  backend:
+    build: ./src/backend
+    ports:
+      - "5000:5000"
+  database:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: yourpassword
+    ports:
+      - "5432:5432"
+5. 设置测试框架
+在在 tests 目录中安装 Jest 和 Supertest：
+npm install --save-dev jest supertest
+配置测试脚本，确保前后端代码可测试。
+npm install --save-dev jest supertest
