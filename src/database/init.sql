@@ -5,3 +5,4 @@ CREATE TABLE users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 -- psql -U postgres -d focusguard -f init.sql
+-- /workspace/src/database/init.sql

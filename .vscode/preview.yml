@@ -1,0 +1,18 @@
+# # 点击运行后会调用该文件配置自动运行应用，更多运行命令示例可前往https://docs.qq.com/aio/DRUFZcHVvZlJuY3l2?u=7c2feb6441bf45a9850c937243d1d070&p=TDSrqgLJdfWD1BI4QnDlct
+
+# autoOpen: false # 打开应用时是否自动开启所有下方apps的预览
+# apps: # 支持配置多个应用
+#   - port: 3000 # 应用的端口
+#     run: echo “请前往preview设置启动命令” # 应用的启动命令
+#     root: / # 应用的启动目录
+#     name: cloud-studio-app # 应用名称
+#     description: 我的Cloud Studio App。 # 应用描述
+#     autoOpen: false # 打开应用时是否自动开启预览（优先级高于根级 autoOpen）
+
+apps:
+  - port: 3000  # 应用的端口，需与代码中app.listen(3000)的端口一致
+    run: npm start  # 【关键】改为你的真实启动命令
+    root: / # 【关键】改为你项目的根目录
+    name: adhd-app  # 应用显示名称，可自定义
+    description: ADHD 专注力管理应用。  # 应用描述，可自定义
+    autoOpen: false  # 打开工作空间时是否自动启动预览
