@@ -46,3 +46,5 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('未处理的 Promise 拒绝:', reason);
   process.exit(1);
 });
+
+
